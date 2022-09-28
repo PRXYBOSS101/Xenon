@@ -1,6 +1,6 @@
 {
   "debug": "True",
-  "port": "8080",
+  "port": "2343",
   "prefix": "/xenon/",
   "blacklist": ["lucidofficial.xyz", "voidofficial.xyz"],
   "domain": "localhost:8080"
