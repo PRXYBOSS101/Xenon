@@ -1,1 +1,0 @@
-__all__ = ['a', 'area', 'audio', 'base', 'embed', 'iframe', 'img', 'script', 'source', 'track']

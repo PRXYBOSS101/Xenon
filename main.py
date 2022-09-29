@@ -3,6 +3,7 @@ from flask import Flask, request
 from rewriter import rewriter
 import json 
 
+
 config = json.load(open('config.json'))
 
 app = Flask(__name__)
@@ -13,26 +14,55 @@ def main():
 
 @app.route(f'/{config["prefix"]}/<path:url>')
 def proxy(url):
+    header = request.headers
+    header = {k: json.dumps(v) if isinstance(v, dict) else v for k,v in header.items()}
+    del header['Host']
+    if "Host" in header:
+        del header['Host']
+    elif "X-Forwarded-Host" in header:
+        del header['X-Forwarded-Host']
+    elif "X-Forwarded-Server" in header:
+        del header['X-Forwarded-Server']
+    elif "X-Forwarded-For" in header:
+        del header['X-Forwarded-For']
+    elif "X-Forwarded-Proto" in header:
+        del header['X-Forwarded-Proto']
+    elif "X-Forwarded-Port" in header:
+        del header['X-Forwarded-Port']
+    elif "X-Forwarded-Path" in header:
+        del header['X-Forwarded-Path']
+    elif "Sec-Fetch-Site" in header:
+        del header['Sec-Fetch-Site']
+    elif "Sec-Fetch-Mode" in header:
+        del header['Sec-Fetch-Mode']
+    elif "Sec-Fetch-Dest" in header:
+        del header['Sec-Fetch-Dest']
+    elif "Sec-Fetch-User" in header:
+        del header['Sec-Fetch-User']
+    del header['Accept-Encoding']
+
     if url.startswith('http://') or url.startswith('https://'):
         for i in config['blacklist']:
             if i == url:
                 return "This site is blacklisted"
             else:
                 continue
-        r = requests.get(url)
+        r = requests.get(url, headers=header)
         html = r.text
     else:
         url = f'http://{url}'
-        for i in config['blacklist']:
+        for i in config['blacklist']:   
             if i == url:
                 return "This site is blacklisted"
             else:
                 continue
-        r = requests.get(url)
+        r = requests.get(url, headers=header)
         html = r.text
 
     return rewriter(html, config["prefix"], config["domain"], url)
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=config['debug'], port=config['port']) 
+    import bjoern
+
+    bjoern.run(app, host="0.0.0.0", port=int(config['port'])) 
