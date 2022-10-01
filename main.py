@@ -16,6 +16,7 @@ def main():
 def proxy(url):
     header = request.headers
     header = {k: json.dumps(v) if isinstance(v, dict) else v for k,v in header.items()}
+    cookies = request.cookies
     del header['Host']
     if "Host" in header:
         del header['Host']
@@ -39,7 +40,20 @@ def proxy(url):
         del header['Sec-Fetch-Dest']
     elif "Sec-Fetch-User" in header:
         del header['Sec-Fetch-User']
+    elif "referer" in header:
+        del header['referer']
+    elif 'Access-Control-Allow-Origin' in header:
+        del header['Access-Control-Allow-Origin']
+
     del header['Accept-Encoding']
+
+    if url.endswith('.html'):
+        header['Content-Type'] = 'text/html'
+    elif url.endswith('.css'):
+        header['Content-Type'] = 'text/css'
+    elif url.endswith('.js'):
+        header['Content-Type'] = 'text/javascript'
+    
 
     if url.startswith('http://') or url.startswith('https://'):
         for i in config['blacklist']:
@@ -56,7 +70,7 @@ def proxy(url):
                 return "This site is blacklisted"
             else:
                 continue
-        r = requests.get(url, headers=header)
+        r = requests.get(url, headers=header, cookies=cookies)
         html = r.text
 
     return rewriter(html, config["prefix"], config["domain"], url)
